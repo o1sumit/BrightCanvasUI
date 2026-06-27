@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ArrowLeft, Bot, PhoneCall, Save, Trash2, Sparkles, Mic2, Languages,
-  MessageSquareQuote, Wand2, Volume2, Play, Gauge, BookOpen, Wrench,
+  MessageSquareQuote, Wand2, Volume2, Play, Pause, Gauge, BookOpen, Wrench,
   UploadCloud, FileText, Globe, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { agents as defaultAgents, voices, type Agent } from "@/lib/mock-data";
 import { LiveCallDialog } from "@/components/calls/live-call-dialog";
 import { useScopedList } from "@/lib/workspace-context";
 import { cn } from "@/lib/utils";
-import { ThemedSelect } from "@/components/ui-kit";
+import { ThemedSelect, TextInput, TextArea } from "@/components/ui-kit";
 
 export const Route = createFileRoute("/_app/agents/$agentId")({
   head: () => ({ meta: [{ title: "Agent Details — Tunis Agent Ai" }] }),
@@ -71,6 +71,59 @@ function AgentDetailPage() {
   const [maxDuration, setMaxDuration] = useState(8);
   const [interruption, setInterruption] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const isPlaying = playingVoice !== null;
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const langCodeMap: Record<string, string> = {
+    "English": "en-US",
+    "English (UK)": "en-GB",
+    "Spanish": "es-ES",
+    "French": "fr-FR",
+    "German": "de-DE",
+    "Hindi": "hi-IN",
+  };
+
+  const playPreview = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    const targetVoice = voice;
+
+    if (playingVoice !== null) {
+      synth.cancel();
+      if (playingVoice === targetVoice) {
+        setPlayingVoice(null);
+        return;
+      }
+    }
+
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(
+      `Hi! This is ${targetVoice}. Looking forward to chatting with you today.`,
+    );
+    const targetLang = langCodeMap[language] ?? "en-US";
+    utter.lang = targetLang;
+    utter.rate = speed;
+    const synthVoices = synth.getVoices();
+    const langMatches = synthVoices.filter((v) => v.lang.toLowerCase().startsWith(targetLang.slice(0, 2)));
+    const preferFemale = /nova|aria|luna|mia|sophia/i.test(targetVoice);
+    const picked =
+      langMatches.find((v) => (preferFemale ? /female|samantha|victoria|google.*us.*english/i.test(v.name) : /male|daniel|alex|google.*uk/i.test(v.name))) ||
+      langMatches[0] ||
+      synthVoices[0];
+    if (picked) utter.voice = picked;
+    utter.onend = () => setPlayingVoice(null);
+    utter.onerror = () => setPlayingVoice(null);
+    synth.speak(utter);
+    setPlayingVoice(targetVoice);
+  };
 
   if (!agent) {
     return (
@@ -174,7 +227,7 @@ function AgentDetailPage() {
           {tab === "basics" && (
             <>
               <Field label="Agent name">
-                <input value={name} onChange={(e) => setName(e.target.value)} className="input-base" />
+                <TextInput value={name} onChange={(e) => setName(e.target.value)} />
               </Field>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Type">
@@ -235,11 +288,28 @@ function AgentDetailPage() {
                   className="w-full accent-[oklch(0.78_0.16_175)]" />
               </Field>
               <div className="rounded-2xl border border-border bg-mint-soft/40 p-4 flex items-center gap-3">
-                <button className="size-11 shrink-0 rounded-xl gradient-mint text-ink grid place-items-center shadow-glow hover:opacity-90 transition-all">
-                  <Play className="size-4 shrink-0" fill="currentColor" />
+                <button
+                  type="button"
+                  onClick={playPreview}
+                  className="size-11 shrink-0 rounded-xl gradient-mint text-ink grid place-items-center shadow-glow hover:opacity-90 active:scale-95 transition-all"
+                >
+                  {isPlaying ? (
+                    <Pause className="size-4 shrink-0" fill="currentColor" />
+                  ) : (
+                    <Play className="size-4 shrink-0" fill="currentColor" />
+                  )}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm">Preview "{voice}"</div>
+                  <div className="font-medium text-sm flex items-center gap-2">
+                    Preview "{voice}"
+                    {isPlaying && (
+                      <span className="inline-flex items-end gap-0.5 h-3">
+                        <span className="w-0.5 bg-mint-deep rounded-full animate-[soundbar_0.9s_ease-in-out_infinite]" style={{ height: "60%" }} />
+                        <span className="w-0.5 bg-mint-deep rounded-full animate-[soundbar_0.9s_ease-in-out_infinite_0.15s]" style={{ height: "100%" }} />
+                        <span className="w-0.5 bg-mint-deep rounded-full animate-[soundbar_0.9s_ease-in-out_infinite_0.3s]" style={{ height: "75%" }} />
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">Hi! This is {voice} — looking forward to chatting with you today.</div>
                 </div>
                 <Volume2 className="size-4 text-muted-foreground shrink-0" />
@@ -251,8 +321,8 @@ function AgentDetailPage() {
             <>
               <Field label="Opening greeting" hint="The first line the agent says when the call connects">
                 <div className="relative">
-                  <textarea value={greeting} onChange={(e) => setGreeting(e.target.value)}
-                    className="input-base !h-auto py-3 min-h-[88px] resize-y pr-24" />
+                  <TextArea value={greeting} onChange={(e) => setGreeting(e.target.value)}
+                    className="pr-24" />
                   <button className="absolute right-2 top-2 inline-flex items-center gap-1 text-xs font-medium text-mint-deep bg-mint-soft px-2.5 py-1 rounded-lg hover:bg-mint/20 transition-all">
                     <Wand2 className="size-3" /> AI rewrite
                   </button>
@@ -271,8 +341,8 @@ function AgentDetailPage() {
                       <Wand2 className="size-3" /> Generate with AI
                     </button>
                   </div>
-                  <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)}
-                    className="w-full bg-transparent outline-none p-4 font-mono text-[13px] leading-relaxed min-h-[280px] resize-y"
+                  <TextArea value={prompt} onChange={(e) => setPrompt(e.target.value)}
+                    className="w-full bg-transparent border-0 focus:ring-0 shadow-none p-4 font-mono text-[13px] leading-relaxed min-h-[280px] resize-y"
                     spellCheck={false} />
                 </div>
               </Field>
@@ -315,8 +385,8 @@ function AgentDetailPage() {
                   <div className="font-semibold text-sm">Crawl a website</div>
                 </div>
                 <div className="flex gap-2">
-                  <input value={urlDraft} onChange={(e) => setUrlDraft(e.target.value)}
-                    placeholder="https://example.com/docs" className="input-base flex-1" />
+                  <TextInput value={urlDraft} onChange={(e) => setUrlDraft(e.target.value)}
+                    placeholder="https://example.com/docs" className="flex-1" />
                   <Button onClick={() => { if (urlDraft) { setUrls((p) => [...p, urlDraft]); setUrlDraft(""); } }}
                     className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
                     <Plus className="size-4 mr-1" /> Add

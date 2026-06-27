@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import {
   ArrowLeft,
@@ -14,12 +14,21 @@ import {
   XCircle,
   Calendar,
   Copy,
+  Search,
+  Filter,
+  PhoneIncoming,
+  PhoneOutgoing,
+  Smile,
+  Meh,
+  Frown,
 } from "lucide-react";
-import { campaigns, agents, phoneNumbers, importLists, CampaignStatus } from "@/lib/mock-data";
+import { campaigns, agents, phoneNumbers, importLists, CampaignStatus, defaultCalls, type Call, type Campaign } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput, TextArea, ThemedSelect } from "@/components/ui-kit";
 import { StatusBadge } from "@/components/campaigns/status-badge";
 import { cn } from "@/lib/utils";
+import { useScopedList } from "@/lib/workspace-context";
+import { CallDetailDialog } from "@/components/calls/call-detail-dialog";
 
 export const Route = createFileRoute("/_app/campaigns/$id")({
   head: () => ({ meta: [{ title: "Campaign Detail — Tunis Agent Ai" }] }),
@@ -28,9 +37,53 @@ export const Route = createFileRoute("/_app/campaigns/$id")({
 
 function CampaignDetail() {
   const { id } = useParams({ from: "/_app/campaigns/$id" });
-  const campaign = useMemo(() => campaigns.find((x) => x.id === id) ?? campaigns[0], [id]);
+  const navigate = useNavigate();
+  const [campaignsList, setCampaignsList] = useScopedList<Campaign>("campaigns", campaigns);
+  const campaign = useMemo(() => campaignsList.find((x) => x.id === id) ?? campaignsList[0], [campaignsList, id]);
 
-  const [tab, setTab] = useState<"overview" | "settings" | "schedule" | "script" | "compliance">("overview");
+  const [tab, setTab] = useState<"overview" | "settings" | "schedule" | "calls">("overview");
+  const [calls] = useScopedList<Call>("calls", defaultCalls);
+  const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const handleSave = () => {
+    const updated = campaignsList.map((c) => {
+      if (c.id === id) {
+        return {
+          ...c,
+          name: form.name,
+          agent: form.agent,
+          phone: form.phone,
+          type: form.type,
+          scheduledAt: form.schedule,
+          status: form.status,
+        };
+      }
+      return c;
+    });
+    setCampaignsList(updated);
+    alert("Campaign changes saved successfully!");
+  };
+
+  const handleStatusChange = (newStatus: CampaignStatus) => {
+    update("status", newStatus);
+    const updated = campaignsList.map((c) => {
+      if (c.id === id) {
+        return { ...c, status: newStatus };
+      }
+      return c;
+    });
+    setCampaignsList(updated);
+  };
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this campaign?")) {
+      const filtered = campaignsList.filter((c) => c.id !== id);
+      setCampaignsList(filtered);
+      navigate({ to: "/campaigns", replace: true });
+    }
+  };
+
   const [form, setForm] = useState({
     name: campaign.name,
     agent: campaign.agent,
@@ -121,7 +174,7 @@ function CampaignDetail() {
             <Button
               variant="outline"
               className="rounded-xl h-10"
-              onClick={() => update("status", "paused")}
+              onClick={() => handleStatusChange("paused")}
             >
               <Pause className="size-4 mr-1.5" /> Pause
             </Button>
@@ -129,12 +182,12 @@ function CampaignDetail() {
             <Button
               variant="outline"
               className="rounded-xl h-10"
-              onClick={() => update("status", "active")}
+              onClick={() => handleStatusChange("active")}
             >
               <Play className="size-4 mr-1.5" /> Resume
             </Button>
           )}
-          <Button className="rounded-xl h-10 gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
+          <Button onClick={handleSave} className="rounded-xl h-10 gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
             <Save className="size-4 mr-1.5" /> Save Changes
           </Button>
         </div>
@@ -159,8 +212,7 @@ function CampaignDetail() {
           { key: "overview", label: "Overview" },
           { key: "settings", label: "Settings" },
           { key: "schedule", label: "Schedule" },
-          { key: "script", label: isOneRing ? "Callback Handler" : "Script & Prompt" },
-          { key: "compliance", label: "Compliance" },
+          { key: "calls", label: "Calls" },
         ].map((t) => (
           <button
             key={t.key}
@@ -321,10 +373,10 @@ function CampaignDetail() {
             </div>
           )}
           <div className="flex justify-between items-center pt-4 border-t border-border">
-            <Button variant="outline" className="rounded-xl text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200">
+            <Button onClick={handleDelete} variant="outline" className="rounded-xl text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200">
               <Trash2 className="size-4 mr-1.5" /> Delete Campaign
             </Button>
-            <Button className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
+            <Button onClick={handleSave} className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
               <Save className="size-4 mr-1.5" /> Save Changes
             </Button>
           </div>
@@ -381,81 +433,87 @@ function CampaignDetail() {
             </Field>
           </div>
           <div className="flex justify-end pt-4 border-t border-border">
-            <Button className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
+            <Button onClick={handleSave} className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
               <Save className="size-4 mr-1.5" /> Save Schedule
             </Button>
           </div>
         </div>
       )}
 
-      {tab === "script" && (
-        <div className="rounded-2xl bg-card border border-border shadow-card p-6 space-y-5 max-w-4xl">
-          <Field label="Campaign Objective">
-            <TextArea
-              rows={3}
-              value={form.objective}
-              onChange={(e) => update("objective", e.target.value)}
+      {tab === "calls" && (
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-card border border-border shadow-card p-5 flex flex-wrap gap-3 items-center">
+            <TextInput
+              placeholder="Search by contact or outcome…"
+              leftIcon={<Search className="size-4" />}
+              className="flex-1 min-w-[240px]"
             />
-          </Field>
-          <Field label="Opening Greeting">
-            <TextArea
-              rows={4}
-              value={form.greeting}
-              onChange={(e) => update("greeting", e.target.value)}
-            />
-          </Field>
-          <div className="rounded-xl bg-mint-soft/40 border border-border p-4 text-sm text-foreground/80">
-            <strong className="text-mint-deep">Tip:</strong> Keep your opening under 15 seconds and clearly identify who you are and why you're calling.
+            <Button variant="outline" className="rounded-xl h-10 border-border"><Filter className="size-4 mr-1.5" /> Filters</Button>
           </div>
-          <div className="flex justify-end pt-4 border-t border-border">
-            <Button className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
-              <Save className="size-4 mr-1.5" /> Save Script
-            </Button>
+
+          <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground bg-muted/40">
+                  {["Contact", "Duration", "Sentiment", "Lead Score", "Outcome", "Date"].map((h) => (
+                    <th key={h} className="px-5 py-3.5 font-medium">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {calls
+                  .filter((c) => c.campaign === campaign.name || campaign.id === "ca-1" ? c.campaign === "Summer Offer Campaign" : c.campaign === campaign.name)
+                  .map((c) => (
+                    <tr 
+                      key={c.id} 
+                      onClick={() => { setSelectedCall(c); setDetailOpen(true); }}
+                      className="border-t border-border hover:bg-mint-soft/30 cursor-pointer transition-colors"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "size-8 shrink-0 rounded-lg grid place-items-center",
+                            c.dir === "in" ? "bg-mint-soft text-mint" : "bg-blue-50 text-blue-600"
+                          )}>
+                            {c.dir === "in" ? <PhoneIncoming className="size-4 shrink-0" /> : <PhoneOutgoing className="size-4 shrink-0" />}
+                          </div>
+                          <div>
+                            <div className="font-medium">{c.contact}</div>
+                            <div className="text-xs text-muted-foreground">{c.phone}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 tabular-nums">{c.duration}</td>
+                      <td className="px-5 py-4">
+                        <span className="flex items-center gap-1.5">
+                          {c.sentiment === "pos" ? <Smile className="size-4 text-emerald-500" /> :
+                           c.sentiment === "neu" ? <Meh className="size-4 text-amber-500" /> :
+                           <Frown className="size-4 text-rose-500" />}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full gradient-mint" style={{ width: `${c.score}%` }} />
+                          </div>
+                          <span className="text-xs font-semibold tabular-nums">{c.score}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-muted-foreground">{c.outcome}</td>
+                      <td className="px-5 py-4 text-muted-foreground">{c.date}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {tab === "compliance" && (
-        <div className="rounded-2xl bg-card border border-border shadow-card p-6 space-y-5 max-w-3xl">
-          <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-sm text-rose-900">
-            <strong>Important:</strong> Telemarketing and automated calling are regulated. Verify local laws, carrier policies, and consent rules before launching — especially for One-Ring campaigns.
-          </div>
-
-          <ToggleRow
-            label="Respect Do-Not-Call (DNC) list"
-            description="Skip any number on the global or campaign DNC list. Required."
-            checked={form.respectDnc}
-            onChange={(v) => update("respectDnc", v)}
-            locked
-          />
-          <ToggleRow
-            label="Honor carrier calling hours"
-            description="Only dial within the schedule window and local time-of-day rules."
-            checked={form.honorCarrierHours}
-            onChange={(v) => update("honorCarrierHours", v)}
-          />
-          <ToggleRow
-            label="Auto-stop on high complaint rate"
-            description="Pause the campaign automatically if the complaint rate exceeds the threshold."
-            checked={form.autoStopOnComplaints}
-            onChange={(v) => update("autoStopOnComplaints", v)}
-          />
-          {form.autoStopOnComplaints && (
-            <Field label="Complaint Threshold (%)">
-              <TextInput
-                value={form.complaintThreshold}
-                onChange={(e) => update("complaintThreshold", e.target.value)}
-              />
-            </Field>
-          )}
-
-          <div className="flex justify-end pt-4 border-t border-border">
-            <Button className="rounded-xl gradient-mint text-ink font-semibold hover:opacity-90 shadow-glow">
-              <Save className="size-4 mr-1.5" /> Save Compliance
-            </Button>
-          </div>
-        </div>
-      )}
+      <CallDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        call={selectedCall}
+      />
     </div>
   );
 }

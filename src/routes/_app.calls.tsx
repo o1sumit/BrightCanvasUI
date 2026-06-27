@@ -1,21 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Filter, PhoneIncoming, PhoneOutgoing, Smile, Meh, Frown, Radio, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TextInput } from "@/components/ui-kit";
 import { useScopedList, useWorkspace } from "@/lib/workspace-context";
+import { defaultCalls, type Call } from "@/lib/mock-data";
+import { CallDetailDialog } from "@/components/calls/call-detail-dialog";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_app/calls")({
   head: () => ({ meta: [{ title: "Calls — Tunis Agent Ai" }] }),
   component: CallsPage,
 });
 
-type Call = { id: string; contact: string; phone: string; campaign: string; agent: string; duration: string; sentiment: string; score: number; outcome: string; date: string; dir: string };
-
 const sentimentIcon = { pos: <Smile className="size-4 text-emerald-500" />, neu: <Meh className="size-4 text-amber-500" />, neg: <Frown className="size-4 text-rose-500" /> } as const;
 
 function CallsPage() {
   const { workspace } = useWorkspace();
-  const [calls] = useScopedList<Call>("calls");
+  const [calls] = useScopedList<Call>("calls", defaultCalls);
+  const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   return (
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -56,13 +59,14 @@ function CallsPage() {
         </div>
       ) : (
       <>
-      <div className="rounded-2xl bg-card border border-border shadow-card p-5 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search by contact, campaign or call ID…" className="pl-9 h-10 rounded-xl bg-background border-border" />
+        <div className="rounded-2xl bg-card border border-border shadow-card p-5 flex flex-wrap gap-3 items-center">
+          <TextInput
+            placeholder="Search by contact, campaign or call ID…"
+            leftIcon={<Search className="size-4" />}
+            className="flex-1 min-w-[240px]"
+          />
+          <Button variant="outline" className="rounded-xl h-10 border-border"><Filter className="size-4 mr-1.5" /> Filters</Button>
         </div>
-        <Button variant="outline" className="rounded-xl h-10 border-border"><Filter className="size-4 mr-1.5" /> Filters</Button>
-      </div>
 
       <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
         <table className="w-full text-sm">
@@ -75,7 +79,11 @@ function CallsPage() {
           </thead>
           <tbody>
             {calls.map((c) => (
-              <tr key={c.id} className="border-t border-border hover:bg-mint-soft/30 cursor-pointer transition-colors">
+              <tr 
+                key={c.id} 
+                onClick={() => { setSelectedCall(c); setDetailOpen(true); }}
+                className="border-t border-border hover:bg-mint-soft/30 cursor-pointer transition-colors"
+              >
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
                     <div className={`size-8 shrink-0 rounded-lg grid place-items-center ${c.dir === "in" ? "bg-mint-soft text-mint" : "bg-blue-50 text-blue-600"}`}>
@@ -108,6 +116,12 @@ function CallsPage() {
       </div>
       </>
       )}
+
+      <CallDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        call={selectedCall}
+      />
     </div>
   );
 }

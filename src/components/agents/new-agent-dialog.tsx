@@ -33,7 +33,7 @@ import {
   Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemedSelect } from "@/components/ui-kit";
+import { ThemedSelect, TextInput, TextArea } from "@/components/ui-kit";
 
 type Step = { id: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
@@ -253,7 +253,7 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                     description="Give your agent a name and pick a starting template. You can customize everything later."
                   >
                     <Field label="Agent name" hint="Shown in dashboards and call logs">
-                      <input value={name} onChange={(e) => setName(e.target.value)} className="input-base" />
+                      <TextInput value={name} onChange={(e) => setName(e.target.value)} />
                     </Field>
 
                     <div>
@@ -365,10 +365,10 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                   >
                     <Field label="Opening greeting" hint="The first line the agent says when the call connects">
                       <div className="relative">
-                        <textarea
+                        <TextArea
                           value={greeting}
                           onChange={(e) => setGreeting(e.target.value)}
-                          className="input-base !h-auto py-3 min-h-[88px] resize-y pr-24"
+                          className="pr-24"
                         />
                         <button className="absolute right-2 top-2 inline-flex items-center gap-1 text-xs font-medium text-mint-deep bg-mint-soft px-2.5 py-1 rounded-lg hover:bg-mint/20 transition-all">
                           <Wand2 className="size-3" /> AI rewrite
@@ -389,10 +389,10 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                             <Wand2 className="size-3" /> Generate with AI
                           </button>
                         </div>
-                        <textarea
+                        <TextArea
                           value={prompt}
                           onChange={(e) => setPrompt(e.target.value)}
-                          className="w-full bg-transparent outline-none p-4 font-mono text-[13px] leading-relaxed min-h-[260px] resize-y"
+                          className="w-full bg-transparent border-0 focus:ring-0 shadow-none p-4 font-mono text-[13px] leading-relaxed min-h-[260px] resize-y"
                           spellCheck={false}
                         />
                       </div>
@@ -453,15 +453,13 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                         <div className="font-semibold text-sm">Crawl a website</div>
                       </div>
                       <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Link2 className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                          <input
-                            value={urlDraft}
-                            onChange={(e) => setUrlDraft(e.target.value)}
-                            placeholder="https://docs.yourcompany.com"
-                            className="input-base pl-9"
-                          />
-                        </div>
+                        <TextInput
+                          value={urlDraft}
+                          onChange={(e) => setUrlDraft(e.target.value)}
+                          placeholder="https://docs.yourcompany.com"
+                          leftIcon={<Link2 className="size-4" />}
+                          className="flex-1"
+                        />
                         <Button
                           type="button"
                           onClick={() => { if (urlDraft.trim()) { setUrls((p) => [...p, urlDraft.trim()]); setUrlDraft(""); } }}

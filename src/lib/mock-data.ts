@@ -75,3 +75,99 @@ export const logs = Array.from({ length: 12 }).map((_, i) => ({
   message: "New Turn Started",
   raw: `{ "category": "System", "CallId": "019ec05f-5a19-7004-8e20-0a247c045a75", "OrgId": "019ec05f-5a19-7004-8e20-0a24..." }`,
 }));
+
+export interface Call {
+  id: string;
+  contact: string;
+  phone: string;
+  campaign: string;
+  agent: string;
+  duration: string;
+  sentiment: "pos" | "neu" | "neg";
+  score: number;
+  outcome: string;
+  date: string;
+  dir: "in" | "out";
+  recordingUrl?: string;
+  summary?: string;
+  transcript?: { from: "agent" | "user"; initials: string; text: string; time: string }[];
+  logs?: { id: string; contactId: string; level: string; category: string; message: string; raw: string }[];
+}
+
+export const defaultCalls: Call[] = [
+  {
+    id: "call-1",
+    contact: "Alice Smith",
+    phone: "+1 548-5684-584",
+    campaign: "Summer Offer Campaign",
+    agent: "Sales Agent",
+    duration: "2m 15s",
+    sentiment: "pos",
+    score: 85,
+    outcome: "Booked Demo",
+    date: "27 Jun 2026 3:15 PM",
+    dir: "in",
+    recordingUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    summary: "Alice called inquiring about Professional plan pricing. She was interested in the CRM integration and auto-dialer features. Recommending the demo booking was successful; she scheduled a meeting for next Tuesday.",
+    transcript: [
+      { from: "agent", initials: "SA", text: "Hello, this is Aria from Tunis Agent. How can I help you today?", time: "3:15 PM" },
+      { from: "user", initials: "AS", text: "Hi, I was looking at your Summer Offer and wanted to know about pricing for a team of 15.", time: "3:15 PM" },
+      { from: "agent", initials: "SA", text: "Absolutely, Alice! Our Professional plan is $49 per user, but with the Summer discount it is currently $39. Would you like to book a quick demo to see how the integrations work?", time: "3:16 PM" },
+      { from: "user", initials: "AS", text: "Yes, that sounds great. Can we do next Tuesday at 10 AM?", time: "3:16 PM" },
+      { from: "agent", initials: "SA", text: "Perfect! I have scheduled that for you. Looking forward to speaking then!", time: "3:17 PM" },
+    ],
+    logs: [
+      { id: "cl-1", contactId: "Jun 27, 15:15:00", level: "info", category: "System", message: "Call initiated", raw: "{}" },
+      { id: "cl-2", contactId: "Jun 27, 15:15:05", level: "info", category: "Agent", message: "Greeting played", raw: "{}" },
+      { id: "cl-3", contactId: "Jun 27, 15:16:10", level: "info", category: "System", message: "Demo scheduled", raw: "{}" },
+    ]
+  },
+  {
+    id: "call-2",
+    contact: "Bob Jones",
+    phone: "+1 546-8542-9862",
+    campaign: "Renewal Reminders Q3",
+    agent: "Retention Agent",
+    duration: "1m 10s",
+    sentiment: "neu",
+    score: 50,
+    outcome: "Needs Followup",
+    date: "27 Jun 2026 2:10 PM",
+    dir: "out",
+    recordingUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    summary: "Bob was notified about his upcoming subscription renewal. He mentioned he needs to consult with his department head before making a decision. Followup is scheduled in 3 days.",
+    transcript: [
+      { from: "agent", initials: "RA", text: "Hi Bob, this is Retention Agent calling regarding your subscription renewal due next week.", time: "2:10 PM" },
+      { from: "user", initials: "BJ", text: "Hi. Yes, I received the email. I'm not sure if we are renewing yet. I need to talk to my manager.", time: "2:10 PM" },
+      { from: "agent", initials: "RA", text: "Understood. Should I call you back on Tuesday to check in?", time: "2:11 PM" },
+      { from: "user", initials: "BJ", text: "Yes, call me then. Thank you.", time: "2:11 PM" },
+    ],
+    logs: [
+      { id: "cl-4", contactId: "Jun 27, 14:10:00", level: "info", category: "System", message: "Call initiated", raw: "{}" },
+    ]
+  },
+  {
+    id: "call-3",
+    contact: "Charlie Green",
+    phone: "+44 20-7946-0958",
+    campaign: "Summer Offer Campaign",
+    agent: "Sales Agent",
+    duration: "0m 45s",
+    sentiment: "neg",
+    score: 10,
+    outcome: "DNC",
+    date: "27 Jun 2026 1:05 PM",
+    dir: "out",
+    recordingUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    summary: "Charlie was upset about being called. He requested to be placed on the Do-Not-Call (DNC) list immediately.",
+    transcript: [
+      { from: "agent", initials: "SA", text: "Hello Charlie, this is Aria calling from Tunis Agent...", time: "1:05 PM" },
+      { from: "user", initials: "CG", text: "Please take me off your calling list. I do not want these calls.", time: "1:05 PM" },
+      { from: "agent", initials: "SA", text: "Of course, Charlie. I will add you to our Do-Not-Call list right now. Have a nice day.", time: "1:05 PM" },
+    ],
+    logs: [
+      { id: "cl-5", contactId: "Jun 27, 13:05:00", level: "info", category: "System", message: "Added to DNC list", raw: "{}" },
+    ]
+  }
+];
+

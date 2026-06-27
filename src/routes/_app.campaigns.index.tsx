@@ -2,12 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Filter, Columns3, MoreHorizontal, ChevronLeft, ChevronRight, ChevronDown, Search, Calendar, Phone, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Campaign, CampaignStatus } from "@/lib/mock-data";
+import { campaigns as defaultCampaigns, type Campaign, type CampaignStatus } from "@/lib/mock-data";
 import { useScopedList, useWorkspace } from "@/lib/workspace-context";
 import { StatusBadge, statusOptions } from "@/components/campaigns/status-badge";
 import { FilterBar } from "@/components/campaigns/filter-bar";
 import { NewCampaignDialog } from "@/components/campaigns/new-campaign-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/campaigns/")({
   head: () => ({ meta: [{ title: "My Campaigns — Tunis Agent Ai" }, { name: "description", content: "Manage your AI voice campaigns." }] }),
@@ -17,10 +18,17 @@ export const Route = createFileRoute("/_app/campaigns/")({
 function CampaignsPage() {
   const [openNew, setOpenNew] = useState(false);
   const { workspace } = useWorkspace();
-  const [campaigns] = useScopedList<Campaign>("campaigns");
+  const [campaigns, setCampaigns] = useScopedList<Campaign>("campaigns", defaultCampaigns);
   const [statuses, setStatuses] = useState<Record<string, CampaignStatus>>(() =>
     Object.fromEntries(campaigns.map((c) => [c.id, c.status]))
   );
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this campaign?")) {
+      const filtered = campaigns.filter((c) => c.id !== id);
+      setCampaigns(filtered);
+    }
+  };
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -73,7 +81,7 @@ function CampaignsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground bg-muted/40">
-                {["Campaign Name", "Call Id", "AI Agent", "Type", "Phone", "Contacts", "Scheduled", "Created By", ""].map((h) => (
+                {["Campaign Name", "AI Agent", "Type", "Phone", "Total Contacts", "Calls Made", "Connected Calls", "Failed Calls", "Status", ""].map((h) => (
                   <th key={h} className="px-5 py-3.5 font-medium">{h}</th>
                 ))}
               </tr>
@@ -81,8 +89,64 @@ function CampaignsPage() {
             <tbody>
               {campaigns.map((c) => {
                 const s = statuses[c.id];
+                const total = c.contacts;
+                let made = 0;
+                let connected = 0;
+                let failed = 0;
+
+                if (c.id === "ca-1") {
+                  made = 4850;
+                  connected = 3820;
+                  failed = 1030;
+                } else if (c.id === "ca-2") {
+                  made = 1240;
+                  connected = 890;
+                  failed = 350;
+                } else if (c.id === "ca-3" || c.id === "ca-4") {
+                  made = 0;
+                  connected = 0;
+                  failed = 0;
+                } else if (c.id === "ca-5") {
+                  made = 1420;
+                  connected = 1100;
+                  failed = 320;
+                } else if (c.id === "ca-6") {
+                  made = 395;
+                  connected = 310;
+                  failed = 85;
+                } else {
+                  made = c.status === "active" ? Math.floor(total * 0.4) : 0;
+                  connected = Math.floor(made * 0.8);
+                  failed = made - connected;
+                }
+
                 return (
                   <tr key={c.id} className="border-t border-border hover:bg-mint-soft/40 transition-colors group">
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col">
+                        <Link to="/campaigns/$id" params={{ id: c.id }} className="font-semibold hover:text-mint-deep transition-colors">{c.name}</Link>
+                        <span className="text-[10px] text-muted-foreground font-mono">{c.callId}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">{c.agent}</td>
+                    <td className="px-5 py-4">
+                      <span className={cn(
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        c.type === "Inbound" ? "bg-sky-50 text-sky-700" :
+                        c.type === "One-Ring" ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"
+                      )}>{c.type}</span>
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground text-xs">{c.phone}</td>
+                    <td className="px-5 py-4 font-semibold">{total.toLocaleString()}</td>
+                    <td className="px-5 py-4 font-medium text-muted-foreground">{made.toLocaleString()}</td>
+                    <td className="px-5 py-4 font-semibold text-emerald-600">
+                      {connected.toLocaleString()}
+                      {made > 0 && <span className="text-[10px] text-muted-foreground font-normal ml-1">({((connected / made) * 100).toFixed(0)}%)</span>}
+                    </td>
+                    <td className="px-5 py-4 font-semibold text-rose-600">
+                      {failed.toLocaleString()}
+                      {made > 0 && <span className="text-[10px] text-muted-foreground font-normal ml-1">({((failed / made) * 100).toFixed(0)}%)</span>}
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2.5">
                         <DropdownMenu>
@@ -90,7 +154,7 @@ function CampaignsPage() {
                             <StatusBadge status={s} />
                             <ChevronDown className="size-3 text-muted-foreground" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="rounded-xl">
+                          <DropdownMenuContent align="end" className="rounded-xl">
                             {statusOptions.map((opt) => (
                               <DropdownMenuItem key={opt.value} onClick={() => setStatuses((p) => ({ ...p, [c.id]: opt.value }))} className="rounded-lg cursor-pointer">
                                 <span className={`size-2 rounded-full ${opt.dot} mr-2`} /> {opt.label}
@@ -98,20 +162,27 @@ function CampaignsPage() {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <Link to="/campaigns/$id" params={{ id: c.id }} className="font-medium hover:text-mint-deep transition-colors">{c.name}</Link>
                       </div>
                     </td>
-                    <td className="px-5 py-4 font-mono text-xs text-muted-foreground">{c.callId}</td>
-                    <td className="px-5 py-4">{c.agent}</td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${c.type === "Inbound" ? "bg-sky-50 text-sky-700" : "bg-violet-50 text-violet-700"}`}>{c.type}</span>
-                    </td>
-                    <td className="px-5 py-4 text-muted-foreground">{c.phone}</td>
-                    <td className="px-5 py-4 font-medium">{c.contacts.toLocaleString()}</td>
-                    <td className="px-5 py-4 text-muted-foreground">{c.scheduledAt}</td>
-                    <td className="px-5 py-4">{c.createdBy}</td>
-                    <td className="px-5 py-4">
-                      <button className="size-8 rounded-lg grid place-items-center text-muted-foreground hover:bg-muted hover:text-foreground opacity-0 group-hover:opacity-100 transition-all shrink-0"><MoreHorizontal className="size-4 shrink-0" /></button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="size-8 rounded-lg grid place-items-center text-muted-foreground hover:bg-muted hover:text-foreground opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                            <MoreHorizontal className="size-4 shrink-0" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                            <Link to="/campaigns/$id" params={{ id: c.id }}>Edit Details</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(c.id)}
+                            className="rounded-lg cursor-pointer text-rose-600 hover:text-rose-700 focus:text-rose-700 focus:bg-rose-50"
+                          >
+                            Delete Campaign
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );
