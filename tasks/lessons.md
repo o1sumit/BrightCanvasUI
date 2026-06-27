@@ -1,7 +1,3 @@
-# Lessons Learned
+# Lessons
 
-## Format
-- **Why:** [explanation of what was learned]
-- **How to apply:** [concrete steps for future work]
-
-## Entries
+- **UI Component Policy**: Always use common custom primitives from `src/components/ui-kit` (`TextInput`, `ThemedSelect`, `TextArea`, `Field`) instead of browser-native elements (like `<select>` or `<textarea>`) or standard UI library elements (like `Input` from `@/components/ui/input`).
