@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Bot, Languages, Mic2, PhoneCall, Sparkles } from "lucide-react";
+import { Plus, Bot, Languages, Mic2, PhoneCall, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Agent } from "@/lib/mock-data";
+import { agents as defaultAgents, type Agent } from "@/lib/mock-data";
 import { useScopedList, useWorkspace } from "@/lib/workspace-context";
 import { NewAgentDialog } from "@/components/agents/new-agent-dialog";
 import { LiveCallDialog } from "@/components/calls/live-call-dialog";
@@ -17,7 +17,7 @@ function AgentsPage() {
   const [openCall, setOpenCall] = useState(false);
   const navigate = useNavigate();
   const { workspace } = useWorkspace();
-  const [agents] = useScopedList<Agent>("agents");
+  const [agents] = useScopedList<Agent>("agents", defaultAgents);
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -72,7 +72,7 @@ function AgentsPage() {
                 onClick={() => navigate({ to: "/agents/$agentId", params: { agentId: a.id } })}
                 className="rounded-xl border-border shrink-0"
               >
-                <Sparkles className="size-4 shrink-0" />
+                <ArrowRight className="size-4 shrink-0" />
               </Button>
             </div>
           </div>

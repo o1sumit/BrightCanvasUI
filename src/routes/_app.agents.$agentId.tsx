@@ -6,8 +6,9 @@ import {
   UploadCloud, FileText, Globe, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { agents, voices } from "@/lib/mock-data";
+import { agents as defaultAgents, voices, type Agent } from "@/lib/mock-data";
 import { LiveCallDialog } from "@/components/calls/live-call-dialog";
+import { useScopedList } from "@/lib/workspace-context";
 import { cn } from "@/lib/utils";
 import { ThemedSelect } from "@/components/ui-kit";
 
@@ -43,7 +44,8 @@ const TABS = [
 function AgentDetailPage() {
   const { agentId } = Route.useParams();
   const navigate = useNavigate();
-  const agent = useMemo(() => agents.find((a) => a.id === agentId), [agentId]);
+  const [agentsList, setAgentsList] = useScopedList<Agent>("agents", defaultAgents);
+  const agent = useMemo(() => agentsList.find((a) => a.id === agentId), [agentsList, agentId]);
 
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("basics");
   const [openCall, setOpenCall] = useState(false);
@@ -81,8 +83,28 @@ function AgentDetailPage() {
   }
 
   const handleSave = () => {
+    const updatedList = agentsList.map((a) => {
+      if (a.id === agentId) {
+        return {
+          ...a,
+          name,
+          type,
+          status,
+          voice,
+          language,
+        };
+      }
+      return a;
+    });
+    setAgentsList(updatedList);
     setSaved(true);
     setTimeout(() => setSaved(false), 1600);
+  };
+
+  const handleDelete = () => {
+    const updatedList = agentsList.filter((a) => a.id !== agentId);
+    setAgentsList(updatedList);
+    navigate({ to: "/agents" });
   };
 
   return (
@@ -379,7 +401,10 @@ function AgentDetailPage() {
             </p>
           </div>
 
-          <button className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 text-rose-600 bg-rose-50/40 hover:bg-rose-50 px-4 py-2.5 text-sm font-medium transition-all">
+          <button
+            onClick={handleDelete}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 text-rose-600 bg-rose-50/40 hover:bg-rose-50 px-4 py-2.5 text-sm font-medium transition-all"
+          >
             <Trash2 className="size-4" /> Delete agent
           </button>
         </aside>

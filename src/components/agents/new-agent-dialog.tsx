@@ -96,7 +96,8 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const [maxDuration, setMaxDuration] = useState(8);
   const [interruption, setInterruption] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const isPlaying = playingVoice !== null;
 
   useEffect(() => {
     return () => {
@@ -115,33 +116,38 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     Hindi: "hi-IN",
   };
 
-  const playPreview = () => {
+  const playPreview = (voiceToPlay?: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     const synth = window.speechSynthesis;
-    if (isPlaying) {
+    const targetVoice = voiceToPlay || voice;
+
+    if (playingVoice !== null) {
       synth.cancel();
-      setIsPlaying(false);
-      return;
+      if (playingVoice === targetVoice) {
+        setPlayingVoice(null);
+        return;
+      }
     }
+
     synth.cancel();
     const utter = new SpeechSynthesisUtterance(
-      `Hi! This is ${voice}. Looking forward to chatting with you today.`,
+      `Hi! This is ${targetVoice}. Looking forward to chatting with you today.`,
     );
     const targetLang = langCodeMap[language] ?? "en-US";
     utter.lang = targetLang;
     utter.rate = speed;
     // Try to pick a matching voice; bias female-sounding for Nova/Aria, male for others
-    const voices = synth.getVoices();
-    const langMatches = voices.filter((v) => v.lang.toLowerCase().startsWith(targetLang.slice(0, 2)));
-    const preferFemale = /nova|aria|luna|mia|sophia/i.test(voice);
+    const synthVoices = synth.getVoices();
+    const langMatches = synthVoices.filter((v) => v.lang.toLowerCase().startsWith(targetLang.slice(0, 2)));
+    const preferFemale = /nova|aria|luna|mia|sophia/i.test(targetVoice);
     const picked =
       langMatches.find((v) => (preferFemale ? /female|samantha|victoria|google.*us.*english/i.test(v.name) : /male|daniel|alex|google.*uk/i.test(v.name))) ||
       langMatches[0] ||
-      voices[0];
+      synthVoices[0];
     if (picked) utter.voice = picked;
-    utter.onend = () => setIsPlaying(false);
-    utter.onerror = () => setIsPlaying(false);
-    setIsPlaying(true);
+    utter.onend = () => setPlayingVoice(null);
+    utter.onerror = () => setPlayingVoice(null);
+    setPlayingVoice(targetVoice);
     synth.speak(utter);
   };
 
@@ -575,7 +581,14 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         </DialogContent>
       </Dialog>
 
-      <VoiceSelectDialog open={voicePickerOpen} onOpenChange={setVoicePickerOpen} selected={voice} onSelect={(v) => { setVoice(v); setVoicePickerOpen(false); }} />
+      <VoiceSelectDialog
+        open={voicePickerOpen}
+        onOpenChange={setVoicePickerOpen}
+        selected={voice}
+        onSelect={(v) => setVoice(v)}
+        playingVoice={playingVoice}
+        onPlayPreview={playPreview}
+      />
     </>
   );
 }
@@ -662,7 +675,21 @@ function ReviewRow({ label, value, mono }: { label: string; value: string; mono?
   );
 }
 
-export function VoiceSelectDialog({ open, onOpenChange, selected, onSelect }: { open: boolean; onOpenChange: (o: boolean) => void; selected: string; onSelect: (v: string) => void }) {
+export function VoiceSelectDialog({
+  open,
+  onOpenChange,
+  selected,
+  onSelect,
+  playingVoice,
+  onPlayPreview,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  selected: string;
+  onSelect: (v: string) => void;
+  playingVoice: string | null;
+  onPlayPreview: (v: string) => void;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl rounded-3xl shadow-elevated">
@@ -671,20 +698,39 @@ export function VoiceSelectDialog({ open, onOpenChange, selected, onSelect }: { 
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3 mt-2">
           {voices.map((v) => (
-            <button
+            <div
               key={v}
               onClick={() => onSelect(v)}
               className={cn(
-                "flex items-center justify-between rounded-2xl border h-14 px-4 transition-all hover:border-mint hover:shadow-card group",
+                "flex items-center justify-between rounded-2xl border h-14 px-4 transition-all hover:border-mint hover:shadow-card group cursor-pointer",
                 selected === v ? "border-mint bg-mint-soft" : "border-border bg-card",
               )}
             >
               <span className="font-medium">{v}</span>
-              <span className="size-8 rounded-full bg-mint/10 grid place-items-center text-mint-deep group-hover:gradient-mint group-hover:text-ink transition-all">
-                <Play className="size-3.5" fill="currentColor" />
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlayPreview(v);
+                }}
+                className="size-8 rounded-full bg-mint/10 flex items-center justify-center text-mint-deep group-hover:gradient-mint group-hover:text-ink transition-all hover:scale-105 active:scale-95 shrink-0"
+              >
+                {playingVoice === v ? (
+                  <Pause className="size-3.5" fill="currentColor" />
+                ) : (
+                  <Play className="size-3.5" fill="currentColor" />
+                )}
+              </button>
+            </div>
           ))}
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button
+            onClick={() => onOpenChange(false)}
+            className="rounded-xl gradient-mint text-ink font-semibold shadow-glow hover:opacity-90 px-6 h-10 flex items-center justify-center"
+          >
+            Done
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
