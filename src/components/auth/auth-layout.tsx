@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Phone, Sparkles, ShieldCheck } from "lucide-react";
+import { Phone, Bot, Sparkles, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface AuthLayoutProps {
@@ -27,7 +27,7 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
           className="relative flex items-center gap-2 font-display text-lg font-semibold"
         >
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-            <Phone className="h-5 w-5" />
+            <Bot className="h-5 w-5" />
           </span>
           Tunis Agent Ai
         </motion.div>
@@ -83,9 +83,9 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
           className="w-full max-w-md space-y-8"
         >
           <div className="lg:hidden flex items-center gap-2 font-display text-lg font-semibold">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Phone className="h-5 w-5" />
-            </span>
+            <div className="size-8 rounded-lg gradient-mint grid place-items-center shadow-glow shrink-0">
+              <Bot className="size-4 text-ink" />
+            </div>
             Tunis Agent Ai
           </div>
           <div className="space-y-2">

@@ -167,7 +167,7 @@ export function CallDetailDialog({ open, onOpenChange, call }: CallDetailDialogP
                   onClick={handlePlayPause}
                   className="size-10 rounded-xl gradient-mint text-ink grid place-items-center shadow-glow shrink-0 hover:opacity-90 active:scale-95 transition-all"
                 >
-                  {isPlaying ? <Pause className="size-4" fill="currentColor" /> : <Play className="size-4" fill="currentColor" className="ml-0.5" />}
+                  {isPlaying ? <Pause className="size-4" fill="currentColor" /> : <Play className="size-4 ml-0.5" fill="currentColor" />}
                 </button>
                 <div className="flex-1 min-w-0">
                   <input

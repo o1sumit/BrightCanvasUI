@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Phone } from "lucide-react";
+import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/terms")({
@@ -29,9 +29,9 @@ function TermsPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Phone className="h-4 w-4" />
-            </span>
+            <div className="size-8 rounded-lg gradient-mint grid place-items-center shadow-glow shrink-0">
+              <Bot className="size-4 text-ink" />
+            </div>
             Tunis Agent Ai
           </Link>
         </div>

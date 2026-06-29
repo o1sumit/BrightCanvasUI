@@ -329,7 +329,7 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                     <div className="rounded-2xl border border-border bg-mint-soft/40 p-4 flex items-center gap-3">
                       <button
                         type="button"
-                        onClick={playPreview}
+                        onClick={() => playPreview()}
                         aria-label={isPlaying ? "Stop preview" : "Play preview"}
                         className="size-11 shrink-0 rounded-xl gradient-mint text-ink grid place-items-center shadow-glow hover:opacity-90 active:scale-95 transition-all"
                       >
