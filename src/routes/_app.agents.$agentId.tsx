@@ -6,7 +6,7 @@ import {
   UploadCloud, FileText, Globe, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { agents as defaultAgents, voices, type Agent } from "@/lib/mock-data";
+import { agents as defaultAgents, voices, defaultHumanNumbers, type Agent, type HumanNumber } from "@/lib/mock-data";
 import { LiveCallDialog } from "@/components/calls/live-call-dialog";
 import { useScopedList } from "@/lib/workspace-context";
 import { cn } from "@/lib/utils";
@@ -65,12 +65,42 @@ function AgentDetailPage() {
   ]);
   const [urlDraft, setUrlDraft] = useState("");
   const [urls, setUrls] = useState<string[]>(["https://acme.com/pricing"]);
-  const [tools, setTools] = useState<Record<string, boolean>>({
-    transfer: true, schedule: true, email: false, crm: true,
-  });
+  const [tools, setTools] = useState<Record<string, boolean>>(() => ({
+    transfer: agent?.transferEnabled ?? false,
+    schedule: true,
+    email: false,
+    crm: true,
+  }));
+  const [humanNumbers] = useScopedList<HumanNumber>("humanNumbers", defaultHumanNumbers);
+  const [transferNumber, setTransferNumber] = useState(agent?.transferNumber ?? "");
   const [maxDuration, setMaxDuration] = useState(8);
   const [interruption, setInterruption] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (agent && !initialized) {
+      setName(agent.name);
+      setType(agent.type);
+      setStatus(agent.status);
+      setVoice(agent.voice);
+      setLanguage(agent.language);
+      setTools({
+        transfer: agent.transferEnabled ?? false,
+        schedule: true,
+        email: false,
+        crm: true,
+      });
+      setTransferNumber(agent.transferNumber ?? "");
+      setInitialized(true);
+    }
+  }, [agent, initialized]);
+
+  useEffect(() => {
+    if (humanNumbers.length > 0 && !transferNumber) {
+      setTransferNumber(humanNumbers[0].number);
+    }
+  }, [humanNumbers, transferNumber]);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const isPlaying = playingVoice !== null;
 
@@ -143,8 +173,8 @@ function AgentDetailPage() {
           name,
           type,
           status,
-          voice,
-          language,
+          transferEnabled: tools.transfer,
+          transferNumber: tools.transfer ? transferNumber : undefined,
         };
       }
       return a;
@@ -430,6 +460,21 @@ function AgentDetailPage() {
                   </label>
                 ))}
               </div>
+
+              {tools.transfer && (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200 mt-2">
+                  <Field label="Human transfer destination" hint="Select the phone number to forward calls to.">
+                    <ThemedSelect
+                      value={transferNumber}
+                      onChange={setTransferNumber}
+                      options={humanNumbers.map((hn) => ({
+                        value: hn.number,
+                        label: `${hn.name} (${hn.number}) - ${hn.label}`,
+                      }))}
+                    />
+                  </Field>
+                </div>
+              )}
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label={`Max call duration — ${maxDuration} min`}>
                   <input type="range" min={1} max={30} value={maxDuration}

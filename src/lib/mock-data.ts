@@ -32,6 +32,8 @@ export interface Agent {
   language: string;
   calls: number;
   status: "active" | "draft";
+  transferEnabled?: boolean;
+  transferNumber?: string;
 }
 
 export const agents: Agent[] = [
@@ -45,6 +47,19 @@ export const phoneNumbers = [
   { id: "p-1", number: "+1 548-5684-584", label: "Sales US", region: "United States", linked: "Aria" },
   { id: "p-2", number: "+1 546-8542-9862", label: "Support US", region: "United States", linked: "Milo" },
   { id: "p-3", number: "+44 20-7946-0958", label: "Sales UK", region: "United Kingdom", linked: "Luna" },
+];
+
+export interface HumanNumber {
+  id: string;
+  number: string;
+  name: string;
+  label: string;
+}
+
+export const defaultHumanNumbers: HumanNumber[] = [
+  { id: "hn-1", number: "+1 555-0199", name: "Sarah Connor", label: "Escalations" },
+  { id: "hn-2", number: "+1 555-0244", name: "John Doe", label: "Sales Lead" },
+  { id: "hn-3", number: "+1 555-0388", name: "Jane Smith", label: "Tech Support" },
 ];
 
 export const importLists = [

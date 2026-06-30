@@ -65,6 +65,14 @@ export function renameWorkspace(id: string, name: string) {
   writeAll(all);
 }
 
+export function updateWorkspace(id: string, input: { name: string; color: string }) {
+  const all = readAll();
+  const idx = all.findIndex((w) => w.id === id);
+  if (idx === -1) return;
+  all[idx] = { ...all[idx], name: input.name.trim(), color: input.color };
+  writeAll(all);
+}
+
 export function deleteWorkspace(userId: string, id: string) {
   const all = readAll().filter((w) => w.id !== id);
   writeAll(all);

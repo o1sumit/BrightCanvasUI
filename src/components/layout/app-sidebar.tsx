@@ -47,6 +47,7 @@ const groups: { label: string; items: { title: string; url: string; icon: any }[
     label: "Configure",
     items: [
       { title: "Phone Number", url: "/phone-numbers", icon: Phone },
+      { title: "Human Number", url: "/human-numbers", icon: Users },
       { title: "Action", url: "/actions", icon: Zap },
     ],
   },
@@ -127,11 +128,11 @@ export function AppSidebar() {
                         asChild
                         isActive={active}
                         tooltip={item.title}
-                        className="h-11 rounded-xl transition-all data-[active=true]:gradient-mint data-[active=true]:text-ink data-[active=true]:shadow-glow data-[active=true]:font-semibold hover:bg-mint-soft group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+                        className="h-11 rounded-xl py-0 transition-all data-[active=true]:gradient-mint data-[active=true]:text-ink data-[active=true]:shadow-glow data-[active=true]:font-semibold hover:bg-mint-soft group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
                       >
-                        <Link to={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+                        <Link to={item.url} className="flex items-center gap-3 py-0 leading-none group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
                           <item.icon className="size-[18px] shrink-0" />
-                          <span className="text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
+                          <span className="text-sm leading-none relative top-[1px] group-data-[collapsible=icon]:hidden">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { voices, type Agent } from "@/lib/mock-data";
+import { voices, defaultHumanNumbers, type Agent, type HumanNumber } from "@/lib/mock-data";
 import { useScopedList } from "@/lib/workspace-context";
 import {
   Play,
@@ -88,13 +88,21 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const [urls, setUrls] = useState<string[]>(["https://acme.com/pricing"]);
   const [urlDraft, setUrlDraft] = useState("");
   const [tools, setTools] = useState<Record<string, boolean>>({
-    transfer: true,
+    transfer: false,
     schedule: true,
     email: false,
     crm: true,
   });
+  const [humanNumbers] = useScopedList<HumanNumber>("humanNumbers", defaultHumanNumbers);
+  const [transferNumber, setTransferNumber] = useState("");
   const [maxDuration, setMaxDuration] = useState(8);
   const [interruption, setInterruption] = useState(true);
+
+  useEffect(() => {
+    if (humanNumbers.length > 0 && !transferNumber) {
+      setTransferNumber(humanNumbers[0].number);
+    }
+  }, [humanNumbers, transferNumber]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const isPlaying = playingVoice !== null;
@@ -162,6 +170,8 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
       language,
       calls: 0,
       status: "active",
+      transferEnabled: tools.transfer,
+      transferNumber: tools.transfer ? transferNumber : undefined,
     };
     setAgents([newAgent, ...agents]);
     close();
@@ -499,6 +509,21 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                         <ToolToggle id="crm" icon={Database} title="Update CRM record" desc="Log call notes to your CRM" tools={tools} setTools={setTools} />
                       </div>
                     </div>
+
+                    {tools.transfer && (
+                      <div className="mt-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <Field label="Human transfer destination" hint="Select the phone number to forward calls to.">
+                          <ThemedSelect
+                            value={transferNumber}
+                            onChange={setTransferNumber}
+                            options={humanNumbers.map((hn) => ({
+                              value: hn.number,
+                              label: `${hn.name} (${hn.number}) - ${hn.label}`,
+                            }))}
+                          />
+                        </Field>
+                      </div>
+                    )}
 
                     <Field label={`Max call duration — ${maxDuration} min`} hint="Auto-ends the call if exceeded">
                       <input

@@ -25,6 +25,7 @@ import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPhoneNumbersRouteImport } from './routes/_app.phone-numbers'
 import { Route as AppListsRouteImport } from './routes/_app.lists'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
+import { Route as AppHumanNumbersRouteImport } from './routes/_app.human-numbers'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppContactsRouteImport } from './routes/_app.contacts'
 import { Route as AppCampaignsRouteImport } from './routes/_app.campaigns'
@@ -116,6 +117,11 @@ const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
   path: '/integrations',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHumanNumbersRoute = AppHumanNumbersRouteImport.update({
+  id: '/human-numbers',
+  path: '/human-numbers',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/campaigns': typeof AppCampaignsRouteWithChildren
   '/contacts': typeof AppContactsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/human-numbers': typeof AppHumanNumbersRoute
   '/integrations': typeof AppIntegrationsRoute
   '/lists': typeof AppListsRoute
   '/phone-numbers': typeof AppPhoneNumbersRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/calls': typeof AppCallsRouteWithChildren
   '/contacts': typeof AppContactsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/human-numbers': typeof AppHumanNumbersRoute
   '/integrations': typeof AppIntegrationsRoute
   '/lists': typeof AppListsRoute
   '/phone-numbers': typeof AppPhoneNumbersRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/_app/campaigns': typeof AppCampaignsRouteWithChildren
   '/_app/contacts': typeof AppContactsRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/human-numbers': typeof AppHumanNumbersRoute
   '/_app/integrations': typeof AppIntegrationsRoute
   '/_app/lists': typeof AppListsRoute
   '/_app/phone-numbers': typeof AppPhoneNumbersRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/contacts'
     | '/dashboard'
+    | '/human-numbers'
     | '/integrations'
     | '/lists'
     | '/phone-numbers'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/calls'
     | '/contacts'
     | '/dashboard'
+    | '/human-numbers'
     | '/integrations'
     | '/lists'
     | '/phone-numbers'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/_app/campaigns'
     | '/_app/contacts'
     | '/_app/dashboard'
+    | '/_app/human-numbers'
     | '/_app/integrations'
     | '/_app/lists'
     | '/_app/phone-numbers'
@@ -467,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegrationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/human-numbers': {
+      id: '/_app/human-numbers'
+      path: '/human-numbers'
+      fullPath: '/human-numbers'
+      preLoaderRoute: typeof AppHumanNumbersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -580,6 +599,7 @@ interface AppRouteChildren {
   AppCampaignsRoute: typeof AppCampaignsRouteWithChildren
   AppContactsRoute: typeof AppContactsRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppHumanNumbersRoute: typeof AppHumanNumbersRoute
   AppIntegrationsRoute: typeof AppIntegrationsRoute
   AppListsRoute: typeof AppListsRoute
   AppPhoneNumbersRoute: typeof AppPhoneNumbersRoute
@@ -597,6 +617,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCampaignsRoute: AppCampaignsRouteWithChildren,
   AppContactsRoute: AppContactsRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppHumanNumbersRoute: AppHumanNumbersRoute,
   AppIntegrationsRoute: AppIntegrationsRoute,
   AppListsRoute: AppListsRoute,
   AppPhoneNumbersRoute: AppPhoneNumbersRoute,
